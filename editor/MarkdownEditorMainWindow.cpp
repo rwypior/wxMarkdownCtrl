@@ -7,6 +7,7 @@
 
 MarkdownEditorMainWindow::MarkdownEditorMainWindow( wxWindow* parent )
 	: MainWindow( parent )
+	, timer(this, wxID_ANY)
 {
 	this->Bind(wxEVT_MENU, &MarkdownEditorMainWindow::evtCommand, this);
 	this->m_toolBar1->Bind(wxEVT_TOOL, &MarkdownEditorMainWindow::evtCommand, this);
@@ -17,7 +18,11 @@ MarkdownEditorMainWindow::MarkdownEditorMainWindow( wxWindow* parent )
 	auto iconPath = wxFileName(resDir.GetPath(), "markdown.ico").GetFullPath();
 
 	this->SetIcon(wxIcon(iconPath, wxBitmapType::wxBITMAP_TYPE_ICO));
-	auto asdasd = this->GetIcon().IsOk();
+	
+	this->m_editor->Bind(wxEVT_TEXT, &MarkdownEditorMainWindow::handlerTextChanged, this);
+	this->Bind(wxEVT_TIMER, &MarkdownEditorMainWindow::handlerTimerMarkdown, this, this->timer.GetId());
+
+	m_viewer->setMarkdown("dupa *chuj* kupa");
 }
 
 // Utils
@@ -257,4 +262,14 @@ void MarkdownEditorMainWindow::handlerLink(const wxCommandEvent& event)
 void MarkdownEditorMainWindow::handlerImage(const wxCommandEvent& event)
 {
 	this->insertAndSelectText("![Alt](Path)", 7, 4);
+}
+
+void MarkdownEditorMainWindow::handlerTextChanged(const wxCommandEvent& event)
+{
+	this->timer.StartOnce(500);
+}
+
+void MarkdownEditorMainWindow::handlerTimerMarkdown(const wxTimerEvent& event)
+{
+	m_viewer->setMarkdown(this->m_editor->GetValue());
 }

@@ -14,16 +14,24 @@ add_definitions(-DUNICODE -D_UNICODE)
 project ("wxMarkdownCtrl")
 add_library(wxMarkdownCtrl)
 
-set(WXWIDGETS_INCLUDE_PATH CACHE PATH "Path to WxWidgets include directory")
-set(WXWIDGETS_LIB_PATH CACHE PATH "Path to WxWidgets lib directory")
+set(WXMDCTRL_BUILD_EDITOR ON CACHE BOOL "Build example Markdown editor")
 
-target_include_directories (wxMarkdownCtrl PUBLIC "${WXWIDGETS_INCLUDE_PATH}" "${CMAKE_SOURCE_DIR}/include")
-if (MSVC)
-	target_include_directories (wxMarkdownCtrl PUBLIC "${WXWIDGETS_INCLUDE_PATH}/msvc")
-endif()
-target_link_directories (wxMarkdownCtrl PUBLIC "${WXWIDGETS_LIB_PATH}")
+set_property(TARGET wxMarkdownCtrl PROPERTY CXX_STANDARD 17)
+
+include(cmake/CPM.cmake)
+
+target_include_directories (wxMarkdownCtrl PUBLIC "${CMAKE_SOURCE_DIR}/include")
+
+CPMAddPackage("gh:wxWidgets/wxWidgets@3.2.6")
+CPMAddPackage("gh:rwypior/cppMarkdown@0.5")
+
+target_link_libraries(wxMarkdownCtrl PUBLIC wx::core wx::base wx::html)
+target_link_libraries(wxMarkdownCtrl PUBLIC cppMarkdown::cppMarkdown)
 
 # Include sub-projects.
 add_subdirectory ("src")
 add_subdirectory ("include")
-add_subdirectory ("editor")
+
+if(WXMDCTRL_BUILD_EDITOR)
+	add_subdirectory ("editor")
+endif()

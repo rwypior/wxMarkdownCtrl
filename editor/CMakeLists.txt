@@ -18,14 +18,19 @@ endif()
 project ("MarkdownEditor")
 add_executable(MarkdownEditor ${OPTIONS})
 
-target_include_directories (MarkdownEditor PUBLIC "${WXWIDGETS_INCLUDE_PATH}" "${CMAKE_SOURCE_DIR}/include" ${PROJECT_SOURCE_DIR})
-if (MSVC)
-	target_include_directories (MarkdownEditor PUBLIC "${WXWIDGETS_INCLUDE_PATH}/msvc")
-endif()
-target_link_directories (MarkdownEditor PUBLIC "${WXWIDGETS_LIB_PATH}")
+set_property(TARGET MarkdownEditor PROPERTY CXX_STANDARD 17)
+
+target_link_libraries(MarkdownEditor PUBLIC wxMarkdownCtrl)
+#target_link_libraries(wxMarkdownCtrl PUBLIC wx::net wx::core wx::base)
+#target_link_libraries(wxMarkdownCtrl PUBLIC cppMarkdown::cppMarkdown)
 
 target_sources(MarkdownEditor PRIVATE 
 	"main.cpp" "markdowneditor.cpp" "markdowneditor.h" "MarkdownEditorMainWindow.cpp" "MarkdownEditorMainWindow.h"
+)
+
+add_custom_command(TARGET MarkdownEditor POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy -t $<TARGET_FILE_DIR:MarkdownEditor> $<TARGET_RUNTIME_DLLS:MarkdownEditor>
+  COMMAND_EXPAND_LISTS
 )
 
 add_custom_command(

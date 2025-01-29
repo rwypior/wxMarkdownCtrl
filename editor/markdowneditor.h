@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////
-// C++ code generated with wxFormBuilder (version 4.1.0-0-g733bf3d)
+// C++ code generated with wxFormBuilder (version 4.2.1-0-g80c4cb6)
 // http://www.wxformbuilder.org/
 //
 // PLEASE DO *NOT* EDIT THIS FILE!
@@ -9,6 +9,7 @@
 
 #include <wx/artprov.h>
 #include <wx/xrc/xmlres.h>
+#include "wxMarkdownCtrl.h"
 #include <wx/string.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
@@ -23,7 +24,6 @@
 #include <wx/textctrl.h>
 #include <wx/sizer.h>
 #include <wx/panel.h>
-#include "wxMarkdownCtrl.h"
 #include <wx/scrolwin.h>
 #include <wx/splitter.h>
 #include <wx/frame.h>
@@ -89,7 +89,7 @@ class MainWindow : public wxFrame
 		wxPanel* m_panel2;
 		wxStaticText* m_staticText2;
 		wxScrolledWindow* m_scrolledWindow1;
-		MarkdownCtrl* m_customControl1;
+		MarkdownCtrl* m_viewer;
 
 	public:
 
