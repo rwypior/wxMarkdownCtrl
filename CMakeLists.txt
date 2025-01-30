@@ -1,9 +1,5 @@
-﻿# CMakeList.txt : Top-level CMake project file, do global configuration
-# and include sub-projects here.
-#
-cmake_minimum_required (VERSION 3.26)
+﻿cmake_minimum_required (VERSION 3.26)
 
-# Enable Hot Reload for MSVC compilers if supported.
 if (POLICY CMP0141)
   cmake_policy(SET CMP0141 NEW)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
@@ -12,26 +8,61 @@ endif()
 add_definitions(-DUNICODE -D_UNICODE)
 
 project ("wxMarkdownCtrl")
-add_library(wxMarkdownCtrl)
+add_library(wxMarkdownCtrl INTERFACE)
+add_library(wxMarkdownCtrl::wxMarkdownCtrl ALIAS wxMarkdownCtrl)
 
-set(WXMDCTRL_BUILD_EDITOR ON CACHE BOOL "Build example Markdown editor")
+target_sources (wxMarkdownCtrl PRIVATE "include/wxmarkdownctrl/wxMarkdownCtrl.h")
 
-set_property(TARGET wxMarkdownCtrl PROPERTY CXX_STANDARD 17)
+target_include_directories (wxMarkdownCtrl INTERFACE 
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+)
 
-include(cmake/CPM.cmake)
+find_package(wxWidgets REQUIRED COMPONENTS core base html)
+find_package(cppMarkdown REQUIRED)
 
-target_include_directories (wxMarkdownCtrl PUBLIC "${CMAKE_SOURCE_DIR}/include")
+target_link_libraries(wxMarkdownCtrl INTERFACE wx::core wx::base wx::html)
+target_link_libraries(wxMarkdownCtrl INTERFACE cppMarkdown::cppMarkdown)
 
-CPMAddPackage("gh:wxWidgets/wxWidgets@3.2.6")
-CPMAddPackage("gh:rwypior/cppMarkdown@0.5")
+# Install
 
-target_link_libraries(wxMarkdownCtrl PUBLIC wx::core wx::base wx::html)
-target_link_libraries(wxMarkdownCtrl PUBLIC cppMarkdown::cppMarkdown)
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
-# Include sub-projects.
-add_subdirectory ("src")
-add_subdirectory ("include")
+set(ConfigPackageLocation lib/cmake/wxMarkdownCtrl)
 
-if(WXMDCTRL_BUILD_EDITOR)
-	add_subdirectory ("editor")
-endif()
+configure_package_config_file(
+        cmake/wxMarkdownCtrlConfig.cmake.in
+	    "${CMAKE_CURRENT_BINARY_DIR}/wxMarkdownCtrl/wxMarkdownCtrlConfig.cmake"
+	    INSTALL_DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/wxMarkdownCtrl"
+)
+
+write_basic_package_version_file(
+        "${CMAKE_CURRENT_BINARY_DIR}/wxMarkdownCtrl/wxMarkdownCtrlConfigVersion.cmake"
+        VERSION 1.0.0
+        COMPATIBILITY AnyNewerVersion
+)
+
+install(
+        TARGETS wxMarkdownCtrl EXPORT wxMarkdownCtrlTargets
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+install(
+        DIRECTORY "include/"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+)
+
+install(EXPORT wxMarkdownCtrlTargets
+        FILE wxMarkdownCtrlTargets.cmake
+        NAMESPACE wxMarkdownCtrl::
+        DESTINATION ${ConfigPackageLocation}
+)
+
+install(FILES 
+            "${CMAKE_CURRENT_BINARY_DIR}/wxMarkdownCtrl/wxMarkdownCtrlConfig.cmake" 
+            "${CMAKE_CURRENT_BINARY_DIR}/wxMarkdownCtrl/wxMarkdownCtrlConfigVersion.cmake"
+        DESTINATION ${ConfigPackageLocation}
+)
+
+export(PACKAGE wxMarkdownCtrl)

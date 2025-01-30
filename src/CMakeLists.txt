@@ -1,1 +1,0 @@
-﻿target_sources (wxMarkdownCtrl PUBLIC PRIVATE "wxMarkdownCtrl.cpp" )

@@ -1,1 +1,1 @@
-target_sources (wxMarkdownCtrl PUBLIC "wxMarkdownCtrl.h")
+target_sources (wxMarkdownCtrl PUBLIC "wxmarkdownctrl/wxMarkdownCtrl.h")
