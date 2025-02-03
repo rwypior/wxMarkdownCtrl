@@ -18,7 +18,7 @@ target_include_directories (wxMarkdownCtrl INTERFACE
     "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
 
-find_package(wxWidgets REQUIRED COMPONENTS core base html)
+find_package(wxWidgets CONFIG REQUIRED COMPONENTS core base html)
 find_package(cppMarkdown REQUIRED)
 
 target_link_libraries(wxMarkdownCtrl INTERFACE wx::core wx::base wx::html)
