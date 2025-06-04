@@ -37,6 +37,38 @@ public:
         return this->markdownDocument;
     }
 
+    wxHtmlOpeningStatus OnOpeningURL(wxHtmlURLType type, const wxString& url, wxString* redirect) const
+    {
+        wxFileName urlPath = url;
+        for (const auto& lookupPath : this->lookupPaths)
+        {
+            wxFileName path(lookupPath);
+            for (const auto& dir : urlPath.GetDirs())
+            {
+                path.AppendDir(dir);
+            }
+            path.SetFullName(urlPath.GetFullName());
+
+            if (wxFile::Exists(path.GetFullPath()))
+            {
+                *redirect = path.GetFullPath();
+                return wxHtmlOpeningStatus::wxHTML_REDIRECT;
+            }
+        }
+
+        return wxHtmlOpeningStatus::wxHTML_OPEN;
+    }
+
+    void appendLookPath(const wxString& path)
+    {
+        this->lookupPaths.push_back(path);
+    }
+
+    void clearLookupPaths()
+    {
+        this->lookupPaths.clear();
+    }
+
     void addModifier(HtmlModifier mod)
     {
         this->modifiers.push_back(mod);
@@ -92,6 +124,14 @@ public:
             this->applyModifiers();
     }
 
+    void insertImageWidth(const wxString& width = "100%", bool apply = true)
+    {
+        this->addModifier(createImageWidthModifier(width));
+
+        if (apply)
+            this->applyModifiers();
+    }
+
     static HtmlModifier createHeadModifier(const wxString& head)
     {
         return [head](wxString& html) {
@@ -136,8 +176,20 @@ public:
         };
     }
 
+    static HtmlModifier createImageWidthModifier(const wxString& width = "100%")
+    {
+        return [width](wxString& html) {
+            size_t pos = html.find("<img");
+            if (pos != wxString::npos)
+            {
+                html.insert(pos + 4, wxString(" width=\"") + width + wxString("\""));
+            }
+        };
+    }
+
 private:
     Markdown::Document markdownDocument;
     wxString html = "<!DOCTYPE html><html><head></head><body></body></html>";
     wxVector<HtmlModifier> modifiers;
+    wxVector<wxString> lookupPaths;
 };
