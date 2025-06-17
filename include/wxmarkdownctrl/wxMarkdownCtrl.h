@@ -39,20 +39,23 @@ public:
 
     wxHtmlOpeningStatus OnOpeningURL(wxHtmlURLType type, const wxString& url, wxString* redirect) const
     {
-        wxFileName urlPath = url;
-        for (const auto& lookupPath : this->lookupPaths)
+        if (type == wxHtmlURLType::wxHTML_URL_IMAGE)
         {
-            wxFileName path(lookupPath);
-            for (const auto& dir : urlPath.GetDirs())
+            wxFileName urlPath = url;
+            for (const auto& lookupPath : this->lookupPaths)
             {
-                path.AppendDir(dir);
-            }
-            path.SetFullName(urlPath.GetFullName());
+                wxFileName path(lookupPath);
+                for (const auto& dir : urlPath.GetDirs())
+                {
+                    path.AppendDir(dir);
+                }
+                path.SetFullName(urlPath.GetFullName());
 
-            if (wxFile::Exists(path.GetFullPath()))
-            {
-                *redirect = path.GetFullPath();
-                return wxHtmlOpeningStatus::wxHTML_REDIRECT;
+                if (wxFile::Exists(path.GetFullPath()))
+                {
+                    *redirect = path.GetFullPath();
+                    return wxHtmlOpeningStatus::wxHTML_REDIRECT;
+                }
             }
         }
 
