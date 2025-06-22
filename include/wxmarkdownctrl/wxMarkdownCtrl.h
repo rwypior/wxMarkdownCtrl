@@ -6,6 +6,7 @@
 #include <wx/wxhtml.h>
 #include <wx/string.h>
 
+#include <regex>
 #include <functional>
 
 class MarkdownCtrl : public wxHtmlWindow
@@ -13,7 +14,7 @@ class MarkdownCtrl : public wxHtmlWindow
 public:
     using wxHtmlWindow::wxHtmlWindow;
 
-    using HtmlModifier = std::function<void(wxString&)>;
+    using HtmlModifier = std::function<void(wxString&, MarkdownCtrl&)>;
 
     void setMarkdown(const wxString& markdown, bool applyModifiers = true)
     {
@@ -90,7 +91,7 @@ public:
         wxString html = this->html;
         for (HtmlModifier mod : this->modifiers)
         {
-            mod(html);
+            mod(html, *this);
         }
         this->SetPage(html);
     }
@@ -135,59 +136,99 @@ public:
             this->applyModifiers();
     }
 
+    // Create a modifier that inserts custom text into head tag
     static HtmlModifier createHeadModifier(const wxString& head)
     {
-        return [head](wxString& html) {
+        return [head](wxString& html, MarkdownCtrl&) {
             size_t headpos = html.find("</head>");
             if (headpos != wxString::npos)
             {
                 html.insert(headpos, head);
             }
-        };
+            };
     }
 
+    // Create a modifier that inserts background color to body tag
     static HtmlModifier createBackgroundColorModifier(const wxString& color)
     {
-        return [color](wxString& html) {
+        return [color](wxString& html, MarkdownCtrl&) {
             size_t pos = html.find("<body");
             if (pos != wxString::npos)
             {
                 html.insert(pos + 5, wxString(" bgcolor=\"") + color + "\"");
             }
-        };
+            };
     }
 
+    // Create a modifier that inserts text color to body tag
     static HtmlModifier createTextColorModifier(const wxString& color)
     {
-        return [color](wxString& html) {
+        return [color](wxString& html, MarkdownCtrl&) {
             size_t pos = html.find("<body");
             if (pos != wxString::npos)
             {
                 html.insert(pos + 5, wxString(" text=\"") + color + "\"");
             }
-        };
+            };
     }
 
+    // Create a modifier that inserts link colors to body tag
     static HtmlModifier createLinkColorModifier(const wxString& normal, const wxString& active = "", const wxString& visited = "")
     {
-        return [normal, active, visited](wxString& html) {
+        return [normal, active, visited](wxString& html, MarkdownCtrl&) {
             size_t pos = html.find("<body");
             if (pos != wxString::npos)
             {
                 html.insert(pos + 5, wxString(" link=\"") + normal + "\" alink=\"" + active + "\" vlink=\"" + visited + "\"");
             }
-        };
+            };
     }
 
+    // Create a modifier that inserts width attribute to images that exceed window size
     static HtmlModifier createImageWidthModifier(const wxString& width = "100%")
     {
-        return [width](wxString& html) {
-            size_t pos = html.find("<img");
-            if (pos != wxString::npos)
+        return [width](wxString& html, MarkdownCtrl& wnd) {
+
+            auto windowWidth = wnd.GetClientSize().GetWidth();
+            std::string html2 = html;
+            size_t begin = 0;
+            std::regex imgregex("<img.*?src=\\\"(.+?)\\\".*?>");
+            for (std::smatch matches; std::regex_search(html2, matches, imgregex); html2 = matches.suffix())
             {
-                html.insert(pos + 4, wxString(" width=\"") + width + wxString("\""));
+                auto pos = matches.position();
+                auto len = matches.length();
+
+                std::string replacement;
+                if (matches.size() >= 2)
+                {
+                    std::string src = matches[1];
+                    wxString redirect;
+                    wxHtmlOpeningStatus openStatus = wnd.OnOpeningURL(wxHtmlURLType::wxHTML_URL_IMAGE, src, &redirect);
+
+                    if (openStatus == wxHtmlOpeningStatus::wxHTML_REDIRECT)
+                        src = redirect;
+
+                    wxImage img;
+                    if (img.LoadFile(src) && img.IsOk())
+                    {
+                        int imgWidth = img.GetWidth();
+                        if (imgWidth > windowWidth)
+                        {
+                            replacement = matches[0];
+                            replacement.insert(replacement.length() - 1, " width=\"" + width + "\"");
+                        }
+                    }
+                }
+
+                if (!replacement.empty())
+                {
+                    html.replace(begin + pos, len, replacement);
+                    begin += pos + replacement.length();
+                }
+                else
+                    begin += pos + len;;
             }
-        };
+            };
     }
 
 private:
